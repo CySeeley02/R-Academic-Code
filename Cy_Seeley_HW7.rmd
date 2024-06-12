@@ -1,0 +1,136 @@
+# Intro to Data Science HW 7
+##### Copyright Jeffrey Stanton, Jeffrey Saltz, and Jasmina Tacheva
+
+
+```{r}
+# Enter your name here: Cy Seeley
+```
+
+### Attribution statement: (choose only one and delete the rest)
+
+
+```{r}
+# 1. I did this homework by myself, with help from the book and the professor.
+
+```
+
+The chapter on **linear models** (“Lining Up Our Models”) introduces **linear predictive modeling** using the tool known as **multiple regression**. The term “multiple regression” has an odd history, dating back to an early scientific observation of a phenomenon called **“regression to the mean.”** These days, multiple regression is just an interesting name for using **linear modeling** to assess the **connection between one or more predictor variables and an outcome variable**. 
+
+
+<br>In this exercise, you will **predict Ozone air levels from three predictors**.
+
+A.	We will be using the **airquality** data set available in R. Copy it into a dataframe called **air** and use the appropriate functions to **summarize the data**. 
+
+
+```{r}
+air <- airquality
+summary(air)
+```
+
+B.	In the analysis that follows, **Ozone** will be considered as the **outcome variable**, and **Solar.R**, **Wind**, and **Temp** as the **predictors**. Add a comment to briefly explain the outcome and predictor variables in the dataframe using **?airquality**.
+
+
+```{r}
+?airquality
+#Ozone is the parts per billion average from hours 1300 to 1500 at Roosevelt Island. Solar R is Solar radiation in Langleys in the frequency band 4000-7700 Angstroms from 0800 to 1200 hours at Central Park. Wind is the average wind speed in mph at 0700 and 1000 hours at LagaGaurdia Airport. Lastly, Temp is the maximum daily temperature in Fahrenheit at LaGaurdia Airport.
+```
+
+C.	Inspect the outcome and predictor variables – are there any missing values? Show the code you used to check for that.
+
+
+```{r}
+sum(is.na(air))
+#There is missing values
+```
+
+D.	Use the **na_interpolation()** function from the **imputeTS package** (remember this was used in a previous HW) to fill in the missing values in each of the 4 columns. Make sure there are no more missing values using the commands from Step C.
+
+
+```{r}
+library(imputeTS)
+air$Ozone <- na_interpolation(air$Ozone)
+air$Solar.R <- na_interpolation(air$Solar.R)
+air$Wind <- na_interpolation(air$Wind)
+air$Temp <- na_interpolation(air$Temp)
+```
+
+E.	Create **3 bivariate scatterplots (X-Y) plots** (using ggplot), for each of the predictors with the outcome. **Hint:** In each case, put **Ozone on the Y-axis**, and a **predictor on the X-axis**. Add a comment to each, describing the plot and explaining whether there appears to be a **linear relationship** between the outcome variable and the respective predictor.
+
+
+```{r}
+library(ggplot2)
+solarplot <- ggplot(air, aes(x = Solar.R, y = Ozone)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Ozone vs Solar Radiation",
+       x = "Solar Radiation (lang)",
+       y = "Ozone (ppb)")
+print(solarplot)
+#It deos appear there may be some linear relation between ozone and solar radiation, it appears the relationship may be positive as well.
+windplot <- ggplot(air, aes(x = Wind, y = Ozone)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Ozone vs Wind",
+       x = "Wind (mph)",
+       y = "Ozone (ppb)")
+print(windplot)
+#It appears wind and ozone have a negative linear relationship based on this scatter plot
+tempplot <- ggplot(air, aes(x = Temp, y = Ozone)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "blue") +
+  labs(title = "Ozone vs Temperature",
+       x = "Temperature (Degrees Fahrenheit)",
+       y = "Ozone (ppb)")
+print(tempplot)
+#Temperature and Ozonr also seem to have a positive linear relationship.
+
+```
+
+F.	Next, create a **simple regression model** predicting **Ozone based on Wind**, using the **lm( )** command. In a comment, report the **coefficient** (aka **slope** or **beta weight**) of **Wind** in the regression output and, **if it is statistically significant**, **interpret it** with respect to **Ozone**. Report the **adjusted R-squared** of the model and try to explain what it means. 
+
+
+```{r}
+linmod <- lm(Ozone ~ Wind, data = air)
+summary(linmod)
+#The coefficient is -4.5925, and with a p value of nearly 0 it is statistically significant at essentially all alpha levels. This means it is likely that wind and ozone do have a linear relationship. Lastly the adjusted R squared is .2527 which means that approximately 25.27% of ozonr variance can be explained by the wind data.
+```
+
+G.	Create a **multiple regression model** predicting **Ozone** based on **Solar.R**, **Wind**, and **Temp**.<br> **Make sure to include all three predictors in one model – NOT three different models each with one predictor.**
+
+
+```{r}
+multregmod <- lm(Ozone ~ Solar.R + Wind + Temp, data = air)
+summary(multregmod)
+```
+
+H.	Report the **adjusted R-Squared** in a comment – how does it compare to the adjusted R-squared from Step F? Is this better or worse? Which of the predictors are **statistically significant** in the model? In a comment, report the coefficient of each predictor that is statistically significant. Do not report the coefficients for predictors that are not significant.
+
+
+```{r}
+#The adjusted R squared here is .4207 which is substantially higher than the other one, meaning that these three variables together explain much more of the variance than just wind alone. Wind and temperature are both statistically significant, with coefficients of -2.69669 and 1.53072 respectively. 
+```
+
+I.	Create a one-row data frame like this: 
+
+
+```{r}
+predDF <- data.frame(Solar.R=290, Wind=13, Temp=61)
+```
+
+ and use it with the **predict( )** function to predict the **expected value of Ozone**:
+
+
+```{r}
+predict(multregmod, predDF)
+```
+
+J.	Create an additional **multiple regression model**, with **Temp** as the **outcome variable**, and the other **3 variables** as the **predictors**. 
+
+Review the quality of the model by commenting on its **adjusted R-Squared**.  
+
+
+```{r}
+multregmodtemp <- lm(Temp~Ozone+Wind+Solar.R, data=air)
+summary(multregmodtemp)
+#The adjusted R squared is .403 which is okay, in terms of the quality of the model
+```
